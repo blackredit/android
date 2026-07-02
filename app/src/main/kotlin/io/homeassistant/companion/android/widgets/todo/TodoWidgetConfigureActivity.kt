@@ -23,9 +23,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,7 +42,9 @@ import io.homeassistant.companion.android.common.compose.composable.HADropdownIt
 import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
+import io.homeassistant.companion.android.common.compose.theme.HATextStyle
 import io.homeassistant.companion.android.common.compose.theme.HATheme
+import io.homeassistant.companion.android.common.compose.theme.LocalHAColorScheme
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.DeviceRegistryResponse
@@ -48,8 +53,6 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
 import io.homeassistant.companion.android.util.enableEdgeToEdgeCompat
 import io.homeassistant.companion.android.util.getHexForColor
@@ -57,6 +60,7 @@ import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
+import io.homeassistant.companion.android.widgets.common.WidgetUtils
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -220,7 +224,7 @@ private fun TodoWidgetConfigureView(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (servers.size > 1) {
-                ServerExposedDropdownMenu(
+                ServerDropdownMenu(
                     servers = servers,
                     current = selectedServerId,
                     onSelected = { onServerSelected(it) },
@@ -239,11 +243,16 @@ private fun TodoWidgetConfigureView(
                 addButtonText = stringResource(commonR.string.todo_widget_select_list),
             )
 
+            val colorScheme = LocalHAColorScheme.current
             Row(
-                modifier = Modifier.clickable { onShowCompletedChanged(!showCompleted) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onShowCompletedChanged(!showCompleted) },
             ) {
                 Text(
                     text = stringResource(commonR.string.widget_todo_show_completed),
+                    style = HATextStyle.Body.copy(textAlign = TextAlign.Start),
+                    color = colorScheme.colorTextPrimary,
                     modifier = Modifier
                         .align(Alignment.CenterVertically)
                         .weight(1f),
@@ -255,7 +264,7 @@ private fun TodoWidgetConfigureView(
                 )
             }
 
-            WidgetBackgroundTypeExposedDropdownMenu(
+            WidgetBackgroundTypeDropdownMenu(
                 current = selectedBackgroundType,
                 onSelected = { onBackgroundTypeSelected(it) },
                 modifier = Modifier.padding(bottom = 16.dp),
@@ -287,6 +296,43 @@ private fun TodoWidgetConfigureView(
             )
         }
     }
+}
+
+@Composable
+private fun ServerDropdownMenu(
+    servers: List<Server>,
+    current: Int?,
+    onSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    HADropdownMenu(
+        items = servers.map { HADropdownItem(key = it.id, label = it.friendlyName) },
+        selectedKey = current,
+        onItemSelected = onSelected,
+        label = stringResource(commonR.string.server_select),
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun WidgetBackgroundTypeDropdownMenu(
+    current: WidgetBackgroundType?,
+    onSelected: (WidgetBackgroundType) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val options = remember { WidgetUtils.getBackgroundOptionList(context) }
+    val selectedKey = remember(current, options) {
+        current?.let { WidgetUtils.getSelectedBackgroundOption(context, it, options) }
+    }
+
+    HADropdownMenu(
+        items = options.mapIndexed { index, label -> HADropdownItem(key = index, label = label) },
+        selectedKey = selectedKey,
+        onItemSelected = { index -> onSelected(WidgetUtils.getWidgetBackgroundType(context, options[index])) },
+        label = stringResource(commonR.string.widget_background_type_title),
+        modifier = modifier,
+    )
 }
 
 @Preview
