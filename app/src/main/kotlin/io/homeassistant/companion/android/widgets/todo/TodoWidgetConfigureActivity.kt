@@ -12,23 +12,18 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.Scaffold
-import androidx.compose.material.Switch
-import androidx.compose.material.SwitchDefaults
-import androidx.compose.material.Text
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,6 +33,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
+import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HASwitch
+import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HATheme
 import io.homeassistant.companion.android.common.data.integration.Entity
 import io.homeassistant.companion.android.common.data.websocket.impl.entities.AreaRegistryResponse
@@ -48,7 +46,6 @@ import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
 import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
-import io.homeassistant.companion.android.util.compose.HomeAssistantAppTheme
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -58,8 +55,6 @@ import io.homeassistant.companion.android.util.previewEntity1
 import io.homeassistant.companion.android.util.previewEntity2
 import io.homeassistant.companion.android.util.previewServer1
 import io.homeassistant.companion.android.util.previewServer2
-import io.homeassistant.companion.android.util.safeBottomWindowInsets
-import io.homeassistant.companion.android.util.safeTopWindowInsets
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -105,7 +100,7 @@ class TodoWidgetConfigureActivity : BaseActivity() {
         viewModel.onSetup(widgetId, supportedTextColors)
 
         setContent {
-            HomeAssistantAppTheme {
+            HATheme {
                 TodoWidgetConfigureScreen(
                     viewModel = viewModel,
                     onActionClick = { onActionClick() },
@@ -210,22 +205,17 @@ private fun TodoWidgetConfigureView(
     areaRegistry: List<AreaRegistryResponse>? = null,
 ) {
     Scaffold(
+        contentWindowInsets = WindowInsets.safeDrawing,
         topBar = {
-            TopAppBar(
-                title = { Text(stringResource(commonR.string.widget_todo_label)) },
-                windowInsets = safeTopWindowInsets(),
-                backgroundColor = colorResource(commonR.color.colorBackground),
-                contentColor = colorResource(commonR.color.colorOnBackground),
-            )
+            HATopBar(title = { Text(stringResource(commonR.string.widget_todo_label)) })
         },
     ) { padding ->
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(safeBottomWindowInsets())
                 .padding(padding)
                 .padding(all = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             if (servers.size > 1) {
                 ServerExposedDropdownMenu(
@@ -236,19 +226,16 @@ private fun TodoWidgetConfigureView(
                 )
             }
 
-            // TODO use new theme for Material3 components https://github.com/home-assistant/android/issues/6303
-            HATheme {
-                EntityPicker(
-                    entities = entities,
-                    selectedEntityId = selectedEntityId,
-                    onEntitySelectedId = { onEntitySelected(it) },
-                    onEntityCleared = { onEntitySelected(null) },
-                    entityRegistry = entityRegistry,
-                    deviceRegistry = deviceRegistry,
-                    areaRegistry = areaRegistry,
-                    addButtonText = stringResource(commonR.string.todo_widget_select_list),
-                )
-            }
+            EntityPicker(
+                entities = entities,
+                selectedEntityId = selectedEntityId,
+                onEntitySelectedId = { onEntitySelected(it) },
+                onEntityCleared = { onEntitySelected(null) },
+                entityRegistry = entityRegistry,
+                deviceRegistry = deviceRegistry,
+                areaRegistry = areaRegistry,
+                addButtonText = stringResource(commonR.string.todo_widget_select_list),
+            )
 
             Row(
                 modifier = Modifier.clickable { onShowCompletedChanged(!showCompleted) },
@@ -260,12 +247,9 @@ private fun TodoWidgetConfigureView(
                         .weight(1f),
                 )
 
-                Switch(
+                HASwitch(
                     checked = showCompleted,
                     onCheckedChange = { onShowCompletedChanged(it) },
-                    colors = SwitchDefaults.colors(
-                        uncheckedThumbColor = colorResource(commonR.color.colorSwitchUncheckedThumb),
-                    ),
                 )
             }
 
@@ -288,12 +272,11 @@ private fun TodoWidgetConfigureView(
                 )
             }
 
-            Button(
+            HAAccentButton(
+                text = stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget),
                 modifier = Modifier.fillMaxWidth(),
-                onClick = { onActionClick() },
-            ) {
-                Text(stringResource(if (isUpdateWidget) commonR.string.update_widget else commonR.string.add_widget))
-            }
+                onClick = onActionClick,
+            )
         }
     }
 }
@@ -301,7 +284,7 @@ private fun TodoWidgetConfigureView(
 @Preview
 @Composable
 private fun TodoWidgetConfigureViewPreview() {
-    HomeAssistantAppTheme {
+    HATheme {
         TodoWidgetConfigureView(
             servers = listOf(
                 previewServer1,
