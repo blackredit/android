@@ -35,6 +35,8 @@ import dagger.hilt.android.lifecycle.withCreationCallback
 import io.homeassistant.companion.android.BaseActivity
 import io.homeassistant.companion.android.common.R as commonR
 import io.homeassistant.companion.android.common.compose.composable.HAAccentButton
+import io.homeassistant.companion.android.common.compose.composable.HADropdownItem
+import io.homeassistant.companion.android.common.compose.composable.HADropdownMenu
 import io.homeassistant.companion.android.common.compose.composable.HASwitch
 import io.homeassistant.companion.android.common.compose.composable.HATopBar
 import io.homeassistant.companion.android.common.compose.theme.HATheme
@@ -46,7 +48,6 @@ import io.homeassistant.companion.android.common.util.SdkVersion
 import io.homeassistant.companion.android.database.server.Server
 import io.homeassistant.companion.android.database.widget.WidgetBackgroundType
 import io.homeassistant.companion.android.settings.widgets.ManageWidgetsViewModel
-import io.homeassistant.companion.android.util.compose.ExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.ServerExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.WidgetBackgroundTypeExposedDropdownMenu
 import io.homeassistant.companion.android.util.compose.entity.EntityPicker
@@ -261,14 +262,20 @@ private fun TodoWidgetConfigureView(
             )
 
             if (selectedBackgroundType == WidgetBackgroundType.TRANSPARENT) {
-                ExposedDropdownMenu(
-                    label = stringResource(commonR.string.widget_text_color_title),
-                    keys = listOf(
-                        stringResource(commonR.string.widget_text_color_black),
-                        stringResource(commonR.string.widget_text_color_white),
+                HADropdownMenu(
+                    items = listOf(
+                        HADropdownItem(
+                            key = 0,
+                            label = stringResource(commonR.string.widget_text_color_black),
+                        ),
+                        HADropdownItem(
+                            key = 1,
+                            label = stringResource(commonR.string.widget_text_color_white),
+                        ),
                     ),
-                    currentIndex = textColorIndex,
-                    onSelected = { onTextColorSelected(it) },
+                    selectedKey = textColorIndex,
+                    onItemSelected = onTextColorSelected,
+                    label = stringResource(commonR.string.widget_text_color_title),
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
             }
